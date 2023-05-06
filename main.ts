@@ -9,11 +9,13 @@ import {
 interface WikipediaLinksSettings {
   prefix: string;
   language: string;
+  convertExternalLinks: boolean;
 }
 
 const DEFAULT_SETTINGS: WikipediaLinksSettings = {
   prefix: "w",
   language: "en",
+  convertExternalLinks: true,
 };
 
 export default class WikipediaLinksPlugin extends Plugin {
@@ -27,16 +29,21 @@ export default class WikipediaLinksPlugin extends Plugin {
     this.registerMarkdownPostProcessor((element, context) => {
       const prefix = this.settings.prefix + ":";
       const language = this.settings.language;
+      const convertExternalLinks = this.settings.convertExternalLinks;
 
       const linkElements = element.querySelectorAll("a");
       for (let linkElement of linkElements) {
-        console.log(linkElement);
         const linkText = linkElement.innerText;
         if (linkText.startsWith(prefix)) {
           const linkTarget = linkText.slice(prefix.length);
           context.addChild(
             new WikipediaLink(linkElement, linkTarget, language)
           );
+        } else if (
+          convertExternalLinks &&
+          (linkText.startsWith("http://") || linkText.startsWith("https://"))
+        ) {
+          context.addChild(new ExternalLink(linkElement, linkText));
         }
       }
     });
@@ -52,7 +59,7 @@ export default class WikipediaLinksPlugin extends Plugin {
 }
 
 class WikipediaLink extends MarkdownRenderChild {
-  text: string;
+  linkTarget: string;
   language: string;
 
   constructor(containerEl: HTMLElement, linkTarget: string, language: string) {
@@ -64,7 +71,32 @@ class WikipediaLink extends MarkdownRenderChild {
   onload() {
     const element = this.containerEl.createEl("a", {
       attr: {
+        class: "external-link",
         href: `https://www.wikipedia.org/search-redirect.php?family=wikipedia&language=${this.language}&go=Go&search=${this.linkTarget}`,
+        rel: "noopener",
+        target: "_blank",
+      },
+      text: this.linkTarget,
+    });
+    this.containerEl.replaceWith(element);
+  }
+}
+
+class ExternalLink extends MarkdownRenderChild {
+  linkTarget: string;
+
+  constructor(containerEl: HTMLElement, linkTarget: string) {
+    super(containerEl);
+    this.linkTarget = linkTarget;
+  }
+
+  onload() {
+    const element = this.containerEl.createEl("a", {
+      attr: {
+        class: "external-link",
+        href: this.linkTarget,
+        rel: "noopener",
+        target: "_blank",
       },
       text: this.linkTarget,
     });
@@ -104,6 +136,20 @@ class WikipediaLinksSettingTab extends PluginSettingTab {
           this.plugin.settings.language = value;
           await this.plugin.saveSettings();
         })
+      );
+
+    new Setting(this.containerEl)
+      .setName("Convert external links")
+      .setDesc(
+        "Treat links beginning with http:// or https:// as external links"
+      )
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.convertExternalLinks)
+          .onChange(async (value) => {
+            this.plugin.setings.convertExternalLinks = value;
+            await this.plugin.saveSettings();
+          })
       );
   }
 }
