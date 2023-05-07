@@ -6,7 +6,7 @@ import {
   Setting,
 } from "obsidian";
 
-interface WikipediaLinksSettings {
+interface QuickLinksSettings {
   convertExternalLinks: boolean;
   quickLinks: QuickLink[];
 }
@@ -16,7 +16,7 @@ interface QuickLink {
   target: string;
 }
 
-const DEFAULT_SETTINGS: WikipediaLinksSettings = {
+const DEFAULT_SETTINGS: QuickLinksSettings = {
   convertExternalLinks: true,
   quickLinks: [
     {
@@ -27,13 +27,13 @@ const DEFAULT_SETTINGS: WikipediaLinksSettings = {
   ],
 };
 
-export default class WikipediaLinksPlugin extends Plugin {
-  settings: WikipediaLinksSettings;
+export default class QuickLinksPlugin extends Plugin {
+  settings: QuickLinksSettings;
 
   async onload() {
     await this.loadSettings();
 
-    this.addSettingTab(new WikipediaLinksSettingTab(this.app, this));
+    this.addSettingTab(new QuickLinksSettingTab(this.app, this));
 
     this.registerMarkdownPostProcessor((element, context) => {
       const convertExternalLinks = this.settings.convertExternalLinks;
@@ -112,10 +112,10 @@ class QuickLinkRenderChild extends MarkdownRenderChild {
   }
 }
 
-class WikipediaLinksSettingTab extends PluginSettingTab {
-  plugin: WikipediaLinksPlugin;
+class QuickLinksSettingTab extends PluginSettingTab {
+  plugin: QuickLinksPlugin;
 
-  constructor(app: App, plugin: WikipediaLinksPlugin) {
+  constructor(app: App, plugin: QuickLinksPlugin) {
     super(app, plugin);
     this.plugin = plugin;
   }

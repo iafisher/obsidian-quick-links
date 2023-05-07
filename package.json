@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-wikipedia-links",
+	"name": "obsidian-quick-links",
 	"version": "0.1.0",
-	"description": "Obsidian plugin to quickly link to Wikipedia",
+	"description": "Obsidian plugin to create quick link shortcuts",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
