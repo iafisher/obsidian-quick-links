@@ -7,15 +7,24 @@ import {
 } from "obsidian";
 
 interface WikipediaLinksSettings {
-  prefix: string;
-  language: string;
   convertExternalLinks: boolean;
+  quickLinks: QuickLink[];
+}
+
+interface QuickLink {
+  prefix: string;
+  target: string;
 }
 
 const DEFAULT_SETTINGS: WikipediaLinksSettings = {
-  prefix: "w",
-  language: "en",
   convertExternalLinks: true,
+  quickLinks: [
+    {
+      prefix: "w",
+      target:
+        "https://www.wikipedia.org/search-redirect.php?family=wikipedia&language=en&go=Go&search=%s",
+    },
+  ],
 };
 
 export default class WikipediaLinksPlugin extends Plugin {
@@ -27,23 +36,29 @@ export default class WikipediaLinksPlugin extends Plugin {
     this.addSettingTab(new WikipediaLinksSettingTab(this.app, this));
 
     this.registerMarkdownPostProcessor((element, context) => {
-      const prefix = this.settings.prefix + ":";
-      const language = this.settings.language;
       const convertExternalLinks = this.settings.convertExternalLinks;
+      const quickLinks = this.settings.quickLinks;
 
       const linkElements = element.querySelectorAll("a");
       for (let linkElement of linkElements) {
         const linkText = linkElement.innerText;
-        if (linkText.startsWith(prefix)) {
-          const linkTarget = linkText.slice(prefix.length);
-          context.addChild(
-            new WikipediaLink(linkElement, linkTarget, language)
-          );
-        } else if (
+        if (
           convertExternalLinks &&
           (linkText.startsWith("http://") || linkText.startsWith("https://"))
         ) {
-          context.addChild(new ExternalLink(linkElement, linkText));
+          context.addChild(
+            new QuickLinkRenderChild(linkElement, linkText, linkText)
+          );
+        } else {
+          for (const quickLink of quickLinks) {
+            if (linkText.startsWith(quickLink.prefix)) {
+              const displayText = linkText.slice(quickLink.prefix.length + 1);
+              const linkTarget = quickLink.target.replace("%s", displayText);
+              context.addChild(
+                new QuickLinkRenderChild(linkElement, linkTarget, displayText)
+              );
+            }
+          }
         }
       }
     });
@@ -58,36 +73,18 @@ export default class WikipediaLinksPlugin extends Plugin {
   }
 }
 
-class WikipediaLink extends MarkdownRenderChild {
+class QuickLinkRenderChild extends MarkdownRenderChild {
   linkTarget: string;
-  language: string;
+  displayText: string;
 
-  constructor(containerEl: HTMLElement, linkTarget: string, language: string) {
+  constructor(
+    containerEl: HTMLElement,
+    linkTarget: string,
+    displayText: string
+  ) {
     super(containerEl);
     this.linkTarget = linkTarget;
-    this.language = language;
-  }
-
-  onload() {
-    const element = this.containerEl.createEl("a", {
-      attr: {
-        class: "external-link",
-        href: `https://www.wikipedia.org/search-redirect.php?family=wikipedia&language=${this.language}&go=Go&search=${this.linkTarget}`,
-        rel: "noopener",
-        target: "_blank",
-      },
-      text: this.linkTarget,
-    });
-    this.containerEl.replaceWith(element);
-  }
-}
-
-class ExternalLink extends MarkdownRenderChild {
-  linkTarget: string;
-
-  constructor(containerEl: HTMLElement, linkTarget: string) {
-    super(containerEl);
-    this.linkTarget = linkTarget;
+    this.displayText = displayText;
   }
 
   onload() {
@@ -98,7 +95,7 @@ class ExternalLink extends MarkdownRenderChild {
         rel: "noopener",
         target: "_blank",
       },
-      text: this.linkTarget,
+      text: this.displayText,
     });
     this.containerEl.replaceWith(element);
   }
@@ -114,29 +111,6 @@ class WikipediaLinksSettingTab extends PluginSettingTab {
 
   display(): void {
     this.containerEl.empty();
-    this.containerEl.createEl("h2", { text: "Wikipedia Links settings" });
-
-    new Setting(this.containerEl)
-      .setName("Link prefix")
-      .setDesc(
-        "The prefix, followed by a colon, to turn an internal link into a Wikipedia link"
-      )
-      .addText((text) =>
-        text.setValue(this.plugin.settings.prefix).onChange(async (value) => {
-          this.plugin.settings.prefix = value;
-          await this.plugin.saveSettings();
-        })
-      );
-
-    new Setting(this.containerEl)
-      .setName("Language")
-      .setDesc("The language version of Wikipedia to use, as a language code")
-      .addText((text) =>
-        text.setValue(this.plugin.settings.language).onChange(async (value) => {
-          this.plugin.settings.language = value;
-          await this.plugin.saveSettings();
-        })
-      );
 
     new Setting(this.containerEl)
       .setName("Convert external links")
@@ -147,9 +121,65 @@ class WikipediaLinksSettingTab extends PluginSettingTab {
         toggle
           .setValue(this.plugin.settings.convertExternalLinks)
           .onChange(async (value) => {
-            this.plugin.setings.convertExternalLinks = value;
+            this.plugin.settings.convertExternalLinks = value;
             await this.plugin.saveSettings();
           })
       );
+
+    const div = this.containerEl.createEl("div");
+    this.renderQuickLinksSettings(div);
+  }
+
+  renderQuickLinksSettings(containerEl: HTMLElement) {
+    containerEl.empty();
+    containerEl.createEl("hr");
+
+    new Setting(containerEl)
+      .setName("Manage quick links")
+      .setHeading()
+      .addButton((btn) => {
+        btn.setButtonText("Create new quick link").setCta();
+
+        btn.onClick(async (e) => {
+          this.plugin.settings.quickLinks.push({
+            prefix: "",
+            target: "",
+          });
+
+          this.renderQuickLinksSettings(containerEl);
+        });
+      });
+
+    const quickLinksArray = this.plugin.settings.quickLinks;
+    for (let i = 0; i < quickLinksArray.length; i++) {
+      const quickLink = quickLinksArray[i];
+      new Setting(containerEl)
+        .setName(`Quick link ${i + 1}`)
+        .addText((text) => {
+          text
+            .setPlaceholder("Link prefix")
+            .setValue(quickLink.prefix)
+            .onChange(async (value) => {
+              quickLink.prefix = value;
+              await this.plugin.saveSettings();
+            });
+        })
+        .addText((text) => {
+          text
+            .setPlaceholder("Target URL with %s")
+            .setValue(quickLink.target)
+            .onChange(async (value) => {
+              quickLink.target = value;
+              await this.plugin.saveSettings();
+            });
+        })
+        .addButton((btn) => {
+          btn.setButtonText("Delete").setWarning();
+          btn.onClick(async (e) => {
+            this.plugin.settings.quickLinks.splice(i, 1);
+            this.renderQuickLinksSettings(containerEl);
+          });
+        });
+    }
   }
 }
