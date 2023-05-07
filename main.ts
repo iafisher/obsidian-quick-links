@@ -41,19 +41,30 @@ export default class WikipediaLinksPlugin extends Plugin {
 
       const linkElements = element.querySelectorAll("a");
       for (let linkElement of linkElements) {
+        const linkHref = linkElement.getAttribute("href");
         const linkText = linkElement.innerText;
+
         if (
           convertExternalLinks &&
-          (linkText.startsWith("http://") || linkText.startsWith("https://"))
+          (linkHref.startsWith("http://") || linkHref.startsWith("https://"))
         ) {
           context.addChild(
-            new QuickLinkRenderChild(linkElement, linkText, linkText)
+            new QuickLinkRenderChild(linkElement, linkHref, linkText)
           );
         } else {
           for (const quickLink of quickLinks) {
-            if (linkText.startsWith(quickLink.prefix)) {
-              const displayText = linkText.slice(quickLink.prefix.length + 1);
-              const linkTarget = quickLink.target.replace("%s", displayText);
+            if (linkHref.startsWith(quickLink.prefix)) {
+              const linkHrefNoPrefix = linkHref.slice(
+                quickLink.prefix.length + 1
+              );
+              const displayText =
+                linkHref === linkText ? linkHrefNoPrefix : linkText;
+
+              const linkTarget = quickLink.target.replace(
+                "%s",
+                linkHrefNoPrefix
+              );
+
               context.addChild(
                 new QuickLinkRenderChild(linkElement, linkTarget, displayText)
               );
