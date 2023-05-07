@@ -16,15 +16,17 @@ interface QuickLink {
   target: string;
 }
 
+const DEFAULT_QUICK_LINKS: QuickLinksSettings[] = [
+  {
+    prefix: "w",
+    target:
+      "https://www.wikipedia.org/search-redirect.php?family=wikipedia&language=en&go=Go&search=%s",
+  },
+];
+
 const DEFAULT_SETTINGS: QuickLinksSettings = {
   convertExternalLinks: true,
-  quickLinks: [
-    {
-      prefix: "w",
-      target:
-        "https://www.wikipedia.org/search-redirect.php?family=wikipedia&language=en&go=Go&search=%s",
-    },
-  ],
+  quickLinks: DEFAULT_QUICK_LINKS,
 };
 
 export default class QuickLinksPlugin extends Plugin {
@@ -149,8 +151,7 @@ class QuickLinksSettingTab extends PluginSettingTab {
       .setName("Manage quick links")
       .setHeading()
       .addButton((btn) => {
-        btn.setButtonText("Create new quick link").setCta();
-
+        btn.setButtonText("New quick link").setCta();
         btn.onClick(async (e) => {
           this.plugin.settings.quickLinks.push({
             prefix: "",
@@ -188,9 +189,21 @@ class QuickLinksSettingTab extends PluginSettingTab {
           btn.setButtonText("Delete").setWarning();
           btn.onClick(async (e) => {
             this.plugin.settings.quickLinks.splice(i, 1);
+            await this.plugin.saveSettings();
+
             this.renderQuickLinksSettings(containerEl);
           });
         });
     }
+
+    new Setting(containerEl).addButton((btn) => {
+      btn.setButtonText("Reset to defaults").setWarning();
+      btn.onClick(async (e) => {
+        this.plugin.settings.quickLinks = DEFAULT_QUICK_LINKS;
+        await this.plugin.saveSettings();
+
+        this.renderQuickLinksSettings(containerEl);
+      });
+    });
   }
 }
