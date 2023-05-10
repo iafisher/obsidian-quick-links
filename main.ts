@@ -61,6 +61,10 @@ export default class QuickLinksPlugin extends Plugin {
           );
         } else {
           for (const quickLink of quickLinks) {
+            if (quickLink.prefix === "") {
+              continue;
+            }
+
             if (linkHref.startsWith(quickLink.prefix)) {
               const linkHrefNoPrefix = linkHref.slice(
                 quickLink.prefix.length + 1
