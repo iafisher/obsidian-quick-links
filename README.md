@@ -8,3 +8,4 @@ You can also define your own custom shortcuts. For instance, you could create a 
 ## Development
 - `npm run dev` to build in dev mode and automatically rebuild on changes.
 - `npm run build` to build in prod mode and run the type-checker.
+- `npm run check` to run the type-checker by itself.

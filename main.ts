@@ -16,7 +16,7 @@ interface QuickLink {
   target: string;
 }
 
-const DEFAULT_QUICK_LINKS: QuickLinksSettings[] = [
+const DEFAULT_QUICK_LINKS: QuickLink[] = [
   // Wikipedia
   {
     prefix: "w",
@@ -49,8 +49,8 @@ export default class QuickLinksPlugin extends Plugin {
 
       const linkElements = element.querySelectorAll("a");
       for (let linkElement of linkElements) {
-        const linkHref = linkElement.getAttribute("href");
-        const linkText = linkElement.innerText;
+        const linkHref = linkElement.getAttribute("href") ?? "";
+        const linkText = linkElement.innerText ?? "";
 
         if (
           convertExternalLinks &&
