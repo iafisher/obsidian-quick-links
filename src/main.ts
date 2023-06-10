@@ -8,7 +8,6 @@ import {
 
 interface QuickLinksSettings {
   useWikiLinkSyntax: boolean;
-  convertExternalLinks: boolean;
   quickLinks: QuickLink[];
 }
 
@@ -33,7 +32,6 @@ const DEFAULT_QUICK_LINKS: QuickLink[] = [
 
 const DEFAULT_SETTINGS: QuickLinksSettings = {
   useWikiLinkSyntax: true,
-  convertExternalLinks: true,
   quickLinks: DEFAULT_QUICK_LINKS,
 };
 
@@ -47,7 +45,6 @@ export default class QuickLinksPlugin extends Plugin {
 
     this.registerMarkdownPostProcessor((element, context) => {
       const useWikiLinkSyntax = this.settings.useWikiLinkSyntax;
-      const convertExternalLinks = this.settings.convertExternalLinks;
       const quickLinks = this.settings.quickLinks;
 
       const linkElements = element.querySelectorAll("a");
@@ -62,36 +59,24 @@ export default class QuickLinksPlugin extends Plugin {
         const linkHref = linkElement.getAttribute("href") ?? "";
         const linkText = linkElement.innerText ?? "";
 
-        if (
-          convertExternalLinks &&
-          (linkHref.startsWith("http://") || linkHref.startsWith("https://"))
-        ) {
-          context.addChild(
-            new QuickLinkRenderChild(linkElement, linkHref, linkText)
-          );
-        } else {
-          // TODO: Make this linear instead of quadratic.
-          for (const quickLink of quickLinks) {
-            if (quickLink.prefix === "") {
-              continue;
-            }
+        // TODO: Make this linear instead of quadratic.
+        for (const quickLink of quickLinks) {
+          if (quickLink.prefix === "") {
+            continue;
+          }
 
-            if (linkHref.startsWith(quickLink.prefix)) {
-              const linkHrefNoPrefix = linkHref.slice(
-                quickLink.prefix.length + 1
-              );
-              const displayText =
-                linkHref === linkText ? linkHrefNoPrefix : linkText;
+          if (linkHref.startsWith(quickLink.prefix)) {
+            const linkHrefNoPrefix = linkHref.slice(
+              quickLink.prefix.length + 1
+            );
+            const displayText =
+              linkHref === linkText ? linkHrefNoPrefix : linkText;
 
-              const linkTarget = quickLink.target.replace(
-                "%s",
-                linkHrefNoPrefix
-              );
+            const linkTarget = quickLink.target.replace("%s", linkHrefNoPrefix);
 
-              context.addChild(
-                new QuickLinkRenderChild(linkElement, linkTarget, displayText)
-              );
-            }
+            context.addChild(
+              new QuickLinkRenderChild(linkElement, linkTarget, displayText)
+            );
           }
         }
       }
@@ -145,20 +130,6 @@ class QuickLinksSettingTab extends PluginSettingTab {
 
   display(): void {
     this.containerEl.empty();
-
-    new Setting(this.containerEl)
-      .setName("Convert external links")
-      .setDesc(
-        "Treat links beginning with http:// or https:// as external links"
-      )
-      .addToggle((toggle) =>
-        toggle
-          .setValue(this.plugin.settings.convertExternalLinks)
-          .onChange(async (value) => {
-            this.plugin.settings.convertExternalLinks = value;
-            await this.plugin.saveSettings();
-          })
-      );
 
     new Setting(this.containerEl)
       .setName("Use wiki link syntax")
