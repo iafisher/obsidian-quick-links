@@ -79,7 +79,17 @@ export default class QuickLinksPlugin extends Plugin {
         }
 
         const linkHrefNoPrefix = linkHref.slice(quickLink.prefix.length + 1);
-        const displayText = linkHref === linkText ? linkHrefNoPrefix : linkText;
+        const displayText =
+          // [](w:Whatever) --> linkText === ""
+          // [[w:Whatever]] --> linkHref === linkText
+          //
+          // In either case, we should use "Whatever" as the display text.
+          //
+          // Otherwise, the user has set some custom display text and we should
+          // use that.
+          linkText === "" || linkHref === linkText
+            ? linkHrefNoPrefix
+            : linkText;
 
         const linkTarget = quickLink.target.replace("%s", linkHrefNoPrefix);
 
