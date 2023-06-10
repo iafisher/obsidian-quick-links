@@ -47,6 +47,15 @@ export default class QuickLinksPlugin extends Plugin {
       const useWikiLinkSyntax = this.settings.useWikiLinkSyntax;
       const quickLinks = this.settings.quickLinks;
 
+      const quickLinksMap = new Map();
+      for (const quickLink of quickLinks) {
+        if (quickLink.prefix === "") {
+          continue;
+        }
+
+        quickLinksMap.set(quickLink.prefix, quickLink);
+      }
+
       const linkElements = element.querySelectorAll("a");
       for (let linkElement of linkElements) {
         if (
@@ -59,26 +68,24 @@ export default class QuickLinksPlugin extends Plugin {
         const linkHref = linkElement.getAttribute("href") ?? "";
         const linkText = linkElement.innerText ?? "";
 
-        // TODO: Make this linear instead of quadratic.
-        for (const quickLink of quickLinks) {
-          if (quickLink.prefix === "") {
-            continue;
-          }
-
-          if (linkHref.startsWith(quickLink.prefix)) {
-            const linkHrefNoPrefix = linkHref.slice(
-              quickLink.prefix.length + 1
-            );
-            const displayText =
-              linkHref === linkText ? linkHrefNoPrefix : linkText;
-
-            const linkTarget = quickLink.target.replace("%s", linkHrefNoPrefix);
-
-            context.addChild(
-              new QuickLinkRenderChild(linkElement, linkTarget, displayText)
-            );
-          }
+        const linkPrefix = getLinkPrefix(linkHref);
+        if (linkPrefix === "") {
+          continue;
         }
+
+        const quickLink = quickLinksMap.get(linkPrefix);
+        if (quickLink === undefined) {
+          continue;
+        }
+
+        const linkHrefNoPrefix = linkHref.slice(quickLink.prefix.length + 1);
+        const displayText = linkHref === linkText ? linkHrefNoPrefix : linkText;
+
+        const linkTarget = quickLink.target.replace("%s", linkHrefNoPrefix);
+
+        context.addChild(
+          new QuickLinkRenderChild(linkElement, linkTarget, displayText)
+        );
       }
     });
   }
@@ -212,4 +219,12 @@ class QuickLinksSettingTab extends PluginSettingTab {
       });
     });
   }
+}
+
+function getLinkPrefix(linkHref: string): string {
+  const linkSplit = linkHref.split(":", 2);
+  if (linkSplit.length !== 2) {
+    return "";
+  }
+  return linkSplit[0];
 }
