@@ -7,6 +7,7 @@ import {
 } from "obsidian";
 
 interface QuickLinksSettings {
+  useWikiLinkSyntax: boolean;
   convertExternalLinks: boolean;
   quickLinks: QuickLink[];
 }
@@ -31,6 +32,7 @@ const DEFAULT_QUICK_LINKS: QuickLink[] = [
 ];
 
 const DEFAULT_SETTINGS: QuickLinksSettings = {
+  useWikiLinkSyntax: true,
   convertExternalLinks: true,
   quickLinks: DEFAULT_QUICK_LINKS,
 };
@@ -44,11 +46,19 @@ export default class QuickLinksPlugin extends Plugin {
     this.addSettingTab(new QuickLinksSettingTab(this.app, this));
 
     this.registerMarkdownPostProcessor((element, context) => {
+      const useWikiLinkSyntax = this.settings.useWikiLinkSyntax;
       const convertExternalLinks = this.settings.convertExternalLinks;
       const quickLinks = this.settings.quickLinks;
 
       const linkElements = element.querySelectorAll("a");
       for (let linkElement of linkElements) {
+        if (
+          !useWikiLinkSyntax &&
+          linkElement.classList.contains("internal-link")
+        ) {
+          continue;
+        }
+
         const linkHref = linkElement.getAttribute("href") ?? "";
         const linkText = linkElement.innerText ?? "";
 
@@ -60,6 +70,7 @@ export default class QuickLinksPlugin extends Plugin {
             new QuickLinkRenderChild(linkElement, linkHref, linkText)
           );
         } else {
+          // TODO: Make this linear instead of quadratic.
           for (const quickLink of quickLinks) {
             if (quickLink.prefix === "") {
               continue;
@@ -145,6 +156,20 @@ class QuickLinksSettingTab extends PluginSettingTab {
           .setValue(this.plugin.settings.convertExternalLinks)
           .onChange(async (value) => {
             this.plugin.settings.convertExternalLinks = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(this.containerEl)
+      .setName("Use wiki link syntax")
+      .setDesc(
+        "Use [[w:My link]] syntax instead of [](w:My link). Note that this will cause Obsidian to treat custom links as internal links, for example in autocompletion and graph view."
+      )
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.useWikiLinkSyntax)
+          .onChange(async (value) => {
+            this.plugin.settings.useWikiLinkSyntax = value;
             await this.plugin.saveSettings();
           })
       );
