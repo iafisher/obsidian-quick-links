@@ -6,6 +6,7 @@ import {
   QuickLinksSettingTab,
 } from "./settings";
 import { markdownPostProcessor } from "./reading-mode";
+import { LivePreviewQuickLinksPlugin } from "./live-preview";
 
 export default class QuickLinksPlugin extends Plugin {
   settings: QuickLinksSettings;
@@ -17,6 +18,7 @@ export default class QuickLinksPlugin extends Plugin {
     this.registerMarkdownPostProcessor((element, context) =>
       markdownPostProcessor(element, context, this.settings)
     );
+    this.registerEditorExtension(LivePreviewQuickLinksPlugin);
   }
 
   async loadSettings() {

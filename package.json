@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "npm run check && node esbuild.config.mjs production",
-    "check": "tsc -noEmit -skipLibCheck"
+		"check": "tsc -noEmit -skipLibCheck"
 	},
 	"keywords": [],
 	"author": "Ian Fisher",
@@ -20,5 +20,11 @@
 		"obsidian": "latest",
 		"tslib": "2.4.0",
 		"typescript": "4.7.4"
+	},
+	"dependencies": {
+		"@codemirror/language": "^6.9.0",
+		"@codemirror/state": "^6.2.1",
+		"@codemirror/view": "^6.17.1",
+		"@lezer/common": "^1.0.4"
 	}
 }

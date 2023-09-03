@@ -1,11 +1,11 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 
 import QuickLinksPlugin from "./main";
-import { DEFAULT_QUICK_LINKS, QuickLink } from "./quick-links";
+import { DEFAULT_QUICK_LINKS, QuickLinkMacro } from "./quick-links";
 
 export interface QuickLinksSettings {
   useWikiLinkSyntax: boolean;
-  quickLinks: QuickLink[];
+  quickLinks: QuickLinkMacro[];
 }
 
 export const DEFAULT_SETTINGS: QuickLinksSettings = {
@@ -105,4 +105,19 @@ export class QuickLinksSettingTab extends PluginSettingTab {
       });
     });
   }
+}
+
+export function getQuickLinksMap(settings: QuickLinksSettings): Map<string, QuickLinkMacro> {
+  const quickLinks = settings.quickLinks;
+
+  const quickLinksMap = new Map();
+  for (const quickLink of quickLinks) {
+    if (quickLink.prefix === "") {
+      continue;
+    }
+
+    quickLinksMap.set(quickLink.prefix, quickLink);
+  }
+
+  return quickLinksMap;
 }
