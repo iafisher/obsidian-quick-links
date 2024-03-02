@@ -28,3 +28,5 @@ To set up the plugin for development, clone this repository and create a symlink
 After each rebuild, you will need to disable and reenable the plugin to load the latest code.
 
 Since Obsidian only re-renders the changed parts of a file, you may need to close and reopen the file to see the rendered result of the latest code.
+
+The plugin produces a lot of debugging output, so make sure that Debug/Verbose output isn't filtered out in the console logs.

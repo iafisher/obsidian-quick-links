@@ -19,7 +19,7 @@ export function markdownPostProcessor(
 
     const linkHref = linkElement.getAttribute("href") ?? "";
     const linkText = linkElement.innerText ?? "";
-    const rawLink = { text: linkText, target: linkHref };
+    const rawLink = { text: linkText, target: linkHref, em: false };
     const maybeLink = transformLink(rawLink, quickLinksMap);
     if (maybeLink !== null) {
       context.addChild(new QuickLinkRenderChild(linkElement, maybeLink));

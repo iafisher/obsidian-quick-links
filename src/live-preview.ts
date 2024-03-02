@@ -63,6 +63,7 @@ class LivePreviewQuickLinksPluginValue implements PluginValue {
         from,
         to,
         enter: (node: SyntaxNodeRef) => {
+          console.debug("Found node:", node.node.type.name);
           nodes.push(node.node);
         },
       });
@@ -74,36 +75,40 @@ class LivePreviewQuickLinksPluginValue implements PluginValue {
     if (settings.useWikiLinkSyntax) {
       // e.g., "[[w:New York City]]"
       const plainInternalLinkPattern = [
-        "formatting-link_formatting-link-start",
-        "hmd-internal-link",
-        "formatting-link_formatting-link-end",
+        ["formatting-link_formatting-link-start", "em_formatting-link_formatting-link-start"],
+        ["em_hmd-internal-link", "hmd-internal-link"],
+        ["formatting-link_formatting-link-end", "em_formatting-link_formatting-link-end"],
       ];
+      console.debug("Searching for plain internal links");
       for (const chunk of findChunks(nodes, plainInternalLinkPattern)) {
         console.assert(chunk.length === 3);
         const from = chunk[0].from;
         const to = chunk[chunk.length - 1].to;
         const target = view.state.sliceDoc(chunk[1].from, chunk[1].to);
-  
-        const link = { text: "", target };
+
+        const link = { text: "", target, em: chunk[0].name.startsWith("em") };
+        console.debug("Found link (plain internal)", link);
         this.handleLink(link, false, { from, to }, slices, quickLinksMap);
       }
-  
+
       // e.g., "[[w:Los Angeles|L.A.]]"
       const pipedInternalLinkPattern = [
-        "formatting-link_formatting-link-start",
+        ["formatting-link_formatting-link-start", "em_formatting-link_formatting-link-start"],
         "hmd-internal-link_link-has-alias",
         "hmd-internal-link_link-alias-pipe",
         "hmd-internal-link_link-alias",
-        "formatting-link_formatting-link-end",
+        ["formatting-link_formatting-link-end", "em_formatting-link_formatting-link-end"],
       ];
+      console.debug("Searching for piped internal links");
       for (const chunk of findChunks(nodes, pipedInternalLinkPattern)) {
         console.assert(chunk.length === 5);
         const from = chunk[0].from;
         const to = chunk[chunk.length - 1].to;
         const target = view.state.sliceDoc(chunk[1].from, chunk[1].to);
         const text = view.state.sliceDoc(chunk[3].from, chunk[3].to);
-  
-        const link = { text, target };
+
+        const link = { text, target, em: chunk[0].name.startsWith("em") };
+        console.debug("Found link (piped internal)", link);
         this.handleLink(link, false, { from, to }, slices, quickLinksMap);
       }
     }
@@ -117,6 +122,7 @@ class LivePreviewQuickLinksPluginValue implements PluginValue {
       "string_url",
       "formatting_formatting-link-string_string_url",
     ];
+    console.debug("Searching for external links");
     for (const chunk of findChunks(nodes, externalLinkPattern1)) {
       console.assert(chunk.length === 6);
       const from = chunk[0].from;
@@ -124,7 +130,8 @@ class LivePreviewQuickLinksPluginValue implements PluginValue {
       const target = view.state.sliceDoc(chunk[4].from, chunk[4].to);
       const text = view.state.sliceDoc(chunk[1].from, chunk[1].to);
 
-      const link = { text, target };
+      const link = { text, target, em: false };
+      console.debug("Found link (external)", link);
       this.handleLink(link, true, { from, to }, slices, quickLinksMap);
     }
 
@@ -135,6 +142,7 @@ class LivePreviewQuickLinksPluginValue implements PluginValue {
       "string_url",
       "formatting_formatting-link-string_string_url",
     ];
+    console.debug("Searching for external links (pattern2)");
     for (const chunk of findChunks(nodes, externalLinkPattern2)) {
       console.assert(chunk.length === 4);
       const from = chunk[0].from;
@@ -142,7 +150,8 @@ class LivePreviewQuickLinksPluginValue implements PluginValue {
       const target = view.state.sliceDoc(chunk[2].from, chunk[2].to);
       const text = "";
 
-      const link = { text, target };
+      const link = { text, target, em: false };
+      console.debug("Found link (external)", link);
       this.handleLink(link, true, { from, to }, slices, quickLinksMap);
     }
   }
@@ -184,7 +193,9 @@ class LivePreviewQuickLinksPluginValue implements PluginValue {
   }
 }
 
-function findChunks(nodes: SyntaxNode[], pattern: string[]): SyntaxNode[][] {
+type ChunkPattern = (string | string[])[];
+
+function findChunks(nodes: SyntaxNode[], pattern: ChunkPattern): SyntaxNode[][] {
   const chunks: SyntaxNode[][] = [];
 
   for (let i = 0; i <= nodes.length - pattern.length; i++) {
@@ -197,15 +208,30 @@ function findChunks(nodes: SyntaxNode[], pattern: string[]): SyntaxNode[][] {
   return chunks;
 }
 
-function doesChunkMatch(chunk: SyntaxNodeRef[], pattern: string[]) {
+function doesChunkMatch(chunk: SyntaxNodeRef[], pattern: ChunkPattern): boolean {
   for (let i = 0; i < chunk.length; i++) {
-    if (!chunk[i].name.startsWith(pattern[i])) {
-      return false;
+    if (typeof pattern[i] === "string") {
+      if (!chunk[i].name.startsWith(pattern[i] as string)) {
+        return false;
+      }
+    } else {
+      let matched = false;
+      for (const subpattern of pattern[i]) {
+        if (chunk[i].name.startsWith(subpattern)) {
+          matched = true;
+          break;
+        }
+      }
+
+      if (!matched) {
+        return false;
+      }
     }
   }
 
   return true;
 }
+
 
 class QuickLinksWidget extends WidgetType {
   private slice: QuickLinkSlice;
@@ -226,6 +252,13 @@ class QuickLinksWidget extends WidgetType {
     el.setAttribute("href", this.slice.linkToInsert.target);
     el.setAttribute("rel", "noopener");
     el.setAttribute("target", "_blank");
+
+    if (this.slice.linkToInsert.em) {
+      const outer = document.createElement("em");
+      outer.appendChild(el);
+      return outer;
+    }
+
     return el;
   }
 }

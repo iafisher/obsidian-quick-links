@@ -20,6 +20,7 @@ export const DEFAULT_QUICK_LINKS: QuickLinkMacro[] = [
 export interface RawLink {
   text: string;
   target: string;
+  em: boolean,
 }
 
 export function transformLink(
@@ -50,7 +51,7 @@ export function transformLink(
       : link.text;
 
   const linkTarget = quickLink.target.replace("%s", linkHrefNoPrefix);
-  return { target: linkTarget, text: displayText };
+  return { target: linkTarget, text: displayText, em: link.em };
 }
 
 export function getLinkPrefix(linkHref: string): string {
