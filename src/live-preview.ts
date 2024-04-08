@@ -75,9 +75,9 @@ class LivePreviewQuickLinksPluginValue implements PluginValue {
     if (settings.useWikiLinkSyntax) {
       // e.g., "[[w:New York City]]"
       const plainInternalLinkPattern = [
-        ["formatting-link_formatting-link-start", "em_formatting-link_formatting-link-start"],
-        ["em_hmd-internal-link", "hmd-internal-link"],
-        ["formatting-link_formatting-link-end", "em_formatting-link_formatting-link-end"],
+        "formatting-link_formatting-link-start",
+        "hmd-internal-link",
+        "formatting-link_formatting-link-end",
       ];
       console.debug("Searching for plain internal links");
       for (const chunk of findChunks(nodes, plainInternalLinkPattern)) {
@@ -93,11 +93,11 @@ class LivePreviewQuickLinksPluginValue implements PluginValue {
 
       // e.g., "[[w:Los Angeles|L.A.]]"
       const pipedInternalLinkPattern = [
-        ["formatting-link_formatting-link-start", "em_formatting-link_formatting-link-start"],
+        "formatting-link_formatting-link-start",
         "hmd-internal-link_link-has-alias",
         "hmd-internal-link_link-alias-pipe",
         "hmd-internal-link_link-alias",
-        ["formatting-link_formatting-link-end", "em_formatting-link_formatting-link-end"],
+        "formatting-link_formatting-link-end",
       ];
       console.debug("Searching for piped internal links");
       for (const chunk of findChunks(nodes, pipedInternalLinkPattern)) {
@@ -193,7 +193,7 @@ class LivePreviewQuickLinksPluginValue implements PluginValue {
   }
 }
 
-type ChunkPattern = (string | string[])[];
+type ChunkPattern = string[];
 
 function findChunks(nodes: SyntaxNode[], pattern: ChunkPattern): SyntaxNode[][] {
   const chunks: SyntaxNode[][] = [];
@@ -210,22 +210,8 @@ function findChunks(nodes: SyntaxNode[], pattern: ChunkPattern): SyntaxNode[][] 
 
 function doesChunkMatch(chunk: SyntaxNodeRef[], pattern: ChunkPattern): boolean {
   for (let i = 0; i < chunk.length; i++) {
-    if (typeof pattern[i] === "string") {
-      if (!chunk[i].name.startsWith(pattern[i] as string)) {
-        return false;
-      }
-    } else {
-      let matched = false;
-      for (const subpattern of pattern[i]) {
-        if (chunk[i].name.startsWith(subpattern)) {
-          matched = true;
-          break;
-        }
-      }
-
-      if (!matched) {
-        return false;
-      }
+    if (!chunk[i].name.includes(pattern[i] as string)) {
+      return false;
     }
   }
 
