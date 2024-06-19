@@ -1,3 +1,6 @@
+## v0.2.4 (19 June 2024)
+- A custom word separator can be set per-link. (https://github.com/iafisher/obsidian-quick-links/issues/6)
+
 ## v0.2.3 (7 April 2024)
 - Piped italicized links are now handled correctly. (https://github.com/iafisher/obsidian-quick-links/issues/5)
 
