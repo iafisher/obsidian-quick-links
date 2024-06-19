@@ -44,46 +44,15 @@ export class QuickLinksSettingTab extends PluginSettingTab {
 
   renderQuickLinksSettings(containerEl: HTMLElement) {
     containerEl.empty();
-    containerEl.createEl("hr");
-
-    new Setting(containerEl)
-      .setName("Manage quick links")
-      .setHeading()
-      .addButton((btn) => {
-        btn.setButtonText("New quick link").setCta();
-        btn.onClick(async (e) => {
-          this.plugin.settings.quickLinks.push({
-            prefix: "",
-            target: "",
-          });
-
-          this.renderQuickLinksSettings(containerEl);
-        });
-      });
 
     const quickLinksArray = this.plugin.settings.quickLinks;
     for (let i = 0; i < quickLinksArray.length; i++) {
       const quickLink = quickLinksArray[i];
-      new Setting(containerEl)
+
+      const el = containerEl.createEl("div");
+      new Setting(el)
         .setName(`Quick link ${i + 1}`)
-        .addText((text) => {
-          text
-            .setPlaceholder("Link prefix")
-            .setValue(quickLink.prefix)
-            .onChange(async (value) => {
-              quickLink.prefix = value;
-              await this.plugin.saveSettings();
-            });
-        })
-        .addText((text) => {
-          text
-            .setPlaceholder("Target URL with %s")
-            .setValue(quickLink.target)
-            .onChange(async (value) => {
-              quickLink.target = value;
-              await this.plugin.saveSettings();
-            });
-        })
+        .setHeading()
         .addButton((btn) => {
           btn.setButtonText("Delete").setWarning();
           btn.onClick(async (e) => {
@@ -93,17 +62,66 @@ export class QuickLinksSettingTab extends PluginSettingTab {
             this.renderQuickLinksSettings(containerEl);
           });
         });
+
+      new Setting(el)
+        .setName("Link prefix")
+        .setDesc("e.g., 'w' for [[w:...]]")
+        .addText((text) => {
+          text
+            .setValue(quickLink.prefix)
+            .onChange(async (value) => {
+              quickLink.prefix = value;
+              await this.plugin.saveSettings();
+            });
+        });
+
+      new Setting(el)
+        .setName("Target URL")
+        .setDesc("Put %s as a placeholder for the text of the link.")
+        .addText((text) => {
+          text
+            .setValue(quickLink.target)
+            .onChange(async (value) => {
+              quickLink.target = value;
+              await this.plugin.saveSettings();
+            });
+        });
+
+      new Setting(el)
+        .setName("Word separator")
+        .setDesc("If set, spaces in the link text will be replaced by this character (e.g., an underscore).")
+        .addText((text) => {
+          text
+          .setValue(quickLink.wordSeparator)
+          .onChange(async (value) => {
+            quickLink.wordSeparator = value;
+            await this.plugin.saveSettings();
+          });
+        });
     }
 
-    new Setting(containerEl).addButton((btn) => {
-      btn.setButtonText("Reset to defaults").setWarning();
-      btn.onClick(async (e) => {
-        this.plugin.settings.quickLinks = DEFAULT_QUICK_LINKS;
-        await this.plugin.saveSettings();
+    new Setting(containerEl)
+      .addButton((btn) => {
+        btn.setButtonText("New quick link").setCta();
+        btn.onClick(async (e) => {
+          this.plugin.settings.quickLinks.push({
+            prefix: "",
+            target: "",
+            wordSeparator: "",
+          });
 
-        this.renderQuickLinksSettings(containerEl);
+          this.renderQuickLinksSettings(containerEl);
+        });
+      })
+      .addButton((btn) => {
+        btn.setButtonText("Reset to defaults").setWarning();
+        btn.onClick(async (e) => {
+          this.plugin.settings.quickLinks = DEFAULT_QUICK_LINKS;
+          await this.plugin.saveSettings();
+
+          this.renderQuickLinksSettings(containerEl);
+        });
       });
-    });
   }
 }
 

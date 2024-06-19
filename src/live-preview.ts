@@ -161,7 +161,7 @@ class LivePreviewQuickLinksPluginValue implements PluginValue {
     externalLink: boolean,
     { from, to }: { from: number; to: number },
     slices: QuickLinkSlice[],
-    quickLinksMap: Map<string, QuickLinkMacro>
+    quickLinksMap: Map<string, QuickLinkMacro>,
   ): void {
     const maybeLink = transformLink(link, quickLinksMap);
 

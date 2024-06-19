@@ -1,6 +1,7 @@
 export interface QuickLinkMacro {
   prefix: string;
   target: string;
+  wordSeparator: string;
 }
 
 export const DEFAULT_QUICK_LINKS: QuickLinkMacro[] = [
@@ -9,11 +10,13 @@ export const DEFAULT_QUICK_LINKS: QuickLinkMacro[] = [
     prefix: "w",
     target:
       "https://www.wikipedia.org/w/index.php?title=Special:Search&search=%s",
+    wordSeparator: "",
   },
   // Blank entry for the settings editor
   {
     prefix: "",
     target: "",
+    wordSeparator: "",
   },
 ];
 
@@ -25,7 +28,7 @@ export interface RawLink {
 
 export function transformLink(
   link: RawLink,
-  quickLinksMap: Map<string, QuickLinkMacro>
+  quickLinksMap: Map<string, QuickLinkMacro>,
 ): RawLink | null {
   const linkPrefix = getLinkPrefix(link.target);
   if (linkPrefix === "") {
@@ -50,7 +53,12 @@ export function transformLink(
       ? linkHrefNoPrefix
       : link.text;
 
-  const linkTarget = quickLink.target.replace("%s", linkHrefNoPrefix);
+  let linkTarget = quickLink.target.replace("%s", linkHrefNoPrefix);
+
+  if (quickLink.wordSeparator !== "") {
+    linkTarget = linkTarget.replace(/ +/g, quickLink.wordSeparator);
+  }
+
   return { target: linkTarget, text: displayText, em: link.em };
 }
 
