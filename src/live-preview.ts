@@ -22,6 +22,9 @@ interface QuickLinkSlice {
   to: number;
 }
 
+// defined by esbuild
+declare var DEBUG: boolean;
+
 class LivePreviewQuickLinksPluginValue implements PluginValue {
   decorations: DecorationSet;
   private slices: QuickLinkSlice[];
@@ -63,7 +66,9 @@ class LivePreviewQuickLinksPluginValue implements PluginValue {
         from,
         to,
         enter: (node: SyntaxNodeRef) => {
-          console.debug("Found node:", node.node.type.name);
+          if (DEBUG) {
+            console.debug("Found node:", node.node.type.name);
+          }
           nodes.push(node.node);
         },
       });
@@ -79,7 +84,9 @@ class LivePreviewQuickLinksPluginValue implements PluginValue {
         "hmd-internal-link",
         "formatting-link_formatting-link-end",
       ];
-      console.debug("Searching for plain internal links");
+      if (DEBUG) {
+        console.debug("Searching for plain internal links");
+      }
       for (const chunk of findChunks(nodes, plainInternalLinkPattern)) {
         console.assert(chunk.length === 3);
         const from = chunk[0].from;
@@ -87,7 +94,9 @@ class LivePreviewQuickLinksPluginValue implements PluginValue {
         const target = view.state.sliceDoc(chunk[1].from, chunk[1].to);
 
         const link = { text: "", target, em: chunk[0].name.startsWith("em") };
-        console.debug("Found link (plain internal)", link);
+        if (DEBUG) {
+          console.debug("Found link (plain internal)", link);
+        }
         this.handleLink(link, false, { from, to }, slices, quickLinksMap);
       }
 
@@ -99,7 +108,9 @@ class LivePreviewQuickLinksPluginValue implements PluginValue {
         "hmd-internal-link_link-alias",
         "formatting-link_formatting-link-end",
       ];
-      console.debug("Searching for piped internal links");
+      if (DEBUG) {
+        console.debug("Searching for piped internal links");
+      }
       for (const chunk of findChunks(nodes, pipedInternalLinkPattern)) {
         console.assert(chunk.length === 5);
         const from = chunk[0].from;
@@ -108,7 +119,9 @@ class LivePreviewQuickLinksPluginValue implements PluginValue {
         const text = view.state.sliceDoc(chunk[3].from, chunk[3].to);
 
         const link = { text, target, em: chunk[0].name.startsWith("em") };
-        console.debug("Found link (piped internal)", link);
+        if (DEBUG) {
+          console.debug("Found link (piped internal)", link);
+        }
         this.handleLink(link, false, { from, to }, slices, quickLinksMap);
       }
     }
@@ -122,7 +135,9 @@ class LivePreviewQuickLinksPluginValue implements PluginValue {
       "string_url",
       "formatting_formatting-link-string_string_url",
     ];
-    console.debug("Searching for external links");
+    if (DEBUG) {
+      console.debug("Searching for external links");
+    }
     for (const chunk of findChunks(nodes, externalLinkPattern1)) {
       console.assert(chunk.length === 6);
       const from = chunk[0].from;
@@ -131,7 +146,9 @@ class LivePreviewQuickLinksPluginValue implements PluginValue {
       const text = view.state.sliceDoc(chunk[1].from, chunk[1].to);
 
       const link = { text, target, em: false };
-      console.debug("Found link (external)", link);
+      if (DEBUG) {
+        console.debug("Found link (external)", link);
+      }
       this.handleLink(link, true, { from, to }, slices, quickLinksMap);
     }
 
@@ -142,7 +159,9 @@ class LivePreviewQuickLinksPluginValue implements PluginValue {
       "string_url",
       "formatting_formatting-link-string_string_url",
     ];
-    console.debug("Searching for external links (pattern2)");
+    if (DEBUG) {
+      console.debug("Searching for external links (pattern2)");
+    }
     for (const chunk of findChunks(nodes, externalLinkPattern2)) {
       console.assert(chunk.length === 4);
       const from = chunk[0].from;
@@ -151,7 +170,9 @@ class LivePreviewQuickLinksPluginValue implements PluginValue {
       const text = "";
 
       const link = { text, target, em: false };
-      console.debug("Found link (external)", link);
+      if (DEBUG) {
+        console.debug("Found link (external)", link);
+      }
       this.handleLink(link, true, { from, to }, slices, quickLinksMap);
     }
   }
