@@ -1,3 +1,6 @@
+## v0.2.5 (28 July 2024)
+- Links containing spaces work again. (https://github.com/iafisher/obsidian-quick-links/issues/7)
+
 ## v0.2.4 (19 June 2024)
 - A custom word separator can be set per-link. (https://github.com/iafisher/obsidian-quick-links/issues/6)
 
