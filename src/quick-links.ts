@@ -26,6 +26,8 @@ export interface RawLink {
   em: boolean,
 }
 
+const URL_ENCODED_SPACE = "%20";
+
 export function transformLink(
   link: RawLink,
   quickLinksMap: Map<string, QuickLinkMacro>,
@@ -55,9 +57,16 @@ export function transformLink(
 
   let linkTarget = quickLink.target.replace("%s", linkHrefNoPrefix);
 
-  if (quickLink.wordSeparator !== "") {
-    linkTarget = linkTarget.replace(/ +/g, quickLink.wordSeparator);
+  // We need to replace spaces in links or else Obsidian will refuse to open them.
+  // https://github.com/iafisher/obsidian-quick-links/issues/7
+  let wordSeparator = URL_ENCODED_SPACE;
+  if (quickLink.wordSeparator !== null && quickLink.wordSeparator !== undefined) {
+    const customSeparator = quickLink.wordSeparator.trim();
+    if (customSeparator !== "" && !customSeparator.contains(" ")) {
+      wordSeparator = customSeparator;
+    }
   }
+  linkTarget = linkTarget.replace(/ +/g, wordSeparator);
 
   return { target: linkTarget, text: displayText, em: link.em };
 }

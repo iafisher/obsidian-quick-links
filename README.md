@@ -19,6 +19,8 @@ There are two options:
 Obsidian only re-renders your content when it changes, so open tabs may show the results of outdated settings. Closing and reopening the file will force Obsidian to re-render with the latest settings.
 
 ## Development
+*This section is for developers of the plugin, not for users.*
+
 - `npm run dev` to build in dev mode and automatically rebuild on changes.
 - `npm run build` to build in prod mode and run the type-checker.
 - `npm run check` to run the type-checker by itself.
