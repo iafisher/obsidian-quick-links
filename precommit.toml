@@ -1,0 +1,33 @@
+[[pre_commit]]
+name = "NoDoNotCommit"
+cmd = ["iprecommit-no-forbidden-strings", "--paths"]
+
+[[pre_commit]]
+name = "NewlineAtEndOfFile"
+cmd = ["iprecommit-newline-at-eof"]
+autofix = true
+fail_fast = true
+fix_cmd = ["iprecommit-newline-at-eof", "--fix"]
+
+[[pre_commit]]
+name = "CommonTypos"
+cmd = ["iprecommit-typos", "--paths"]
+
+[[pre_commit]]
+name = "TypeScriptTypeCheck"
+cmd = ["npm", "run", "check"]
+pass_files = false
+
+# commit-msg checks
+[[commit_msg]]
+name = "CommitMessageFormat"
+cmd = ["iprecommit-commit-msg-format", "--max-line-length", "72"]
+
+[[commit_msg]]
+name = "CommitMessageTypos"
+cmd = ["iprecommit-typos", "--paths"]
+
+# pre-push checks (run on commit messages)
+[[pre_push]]
+name = "NoDoNotPush"
+cmd = ["iprecommit-no-forbidden-strings", "--strings", "DO NOT PUSH", "--commits"]
