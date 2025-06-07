@@ -1,6 +1,6 @@
 import { MarkdownPostProcessorContext, MarkdownRenderChild } from "obsidian";
 
-import { RawLink, getLinkPrefix, transformLink } from "./quick-links";
+import { RawLink, transformLink } from "./quick-links";
 import { QuickLinksSettings, getQuickLinksMap } from "./settings";
 
 export function markdownPostProcessor(
