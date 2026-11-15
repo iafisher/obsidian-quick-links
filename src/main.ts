@@ -1,3 +1,4 @@
+import { Prec } from "@codemirror/state";
 import { Plugin } from "obsidian";
 
 import {
@@ -18,7 +19,7 @@ export default class QuickLinksPlugin extends Plugin {
     this.registerMarkdownPostProcessor((element, context) =>
       markdownPostProcessor(element, context, this.settings)
     );
-    this.registerEditorExtension(LivePreviewQuickLinksPlugin);
+    this.registerEditorExtension(Prec.high(LivePreviewQuickLinksPlugin));
   }
 
   async loadSettings() {
